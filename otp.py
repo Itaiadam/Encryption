@@ -1,7 +1,7 @@
 import hashlib
 
 class RBG:
-    def __init__(self,seed: bytes):
+    def __init__(self, seed: bytes):
         self.seed = seed
 
     def next(self, size: int) -> bytes:
