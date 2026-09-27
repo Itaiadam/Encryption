@@ -45,13 +45,28 @@ def expand_key(key: State) -> list[State]:
         key = new_key
     return keys
 
+def aes128_encrypt(key: bytes, pt: bytes ) -> bytes:
+    keys = expand_key(bytes_to_state(key))
+    ct: State = add_round_key(bytes_to_state(pt), keys[0])
+    for i in range(1, 11):
+        ct = aes_little_functions.substitute_bytes(ct)
+        ct = aes_little_functions.shift_rows(ct)
+        if i != 10:
+            ct = aes_little_functions.mix_columns(ct)
+        ct = add_round_key(ct, keys[i])
+    return state_to_bytes(ct)
+
+def aes128_decrypt(key: bytes, ct: bytes ) -> bytes:
+    keys = expand_key(bytes_to_state(key))
+    pt: State = add_round_key(bytes_to_state(ct), keys[10])
+    for i in range(1, 11):
+        if i != 1:
+            pt = aes_little_functions.inverse_mix_columns(pt)
+        pt = aes_little_functions.inverse_shift_rows(pt)
+        pt = aes_little_functions.inverse_substitute_bytes(pt)
+        pt = add_round_key(pt, keys[10-i])
+    return state_to_bytes(pt)
+
 def print_state(state: State) -> None:
     for row in state:
         print(row)
-
-def main():
-
-
-
-if __name__ == "__main__":
-    main()
