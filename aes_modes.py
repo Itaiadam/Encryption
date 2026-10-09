@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 import secrets
 import aes
-from otp_udp_peer_2 import encrypted_message
 
 Size = 16
 Key = secrets.token_bytes(Size)
