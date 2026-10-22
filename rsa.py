@@ -1,4 +1,4 @@
-import json, random, base64, sympy, math
+import json, base64, sympy, math
 from dataclasses import dataclass
 
 def distant_random_primes(size: int) -> tuple[int, int]:
