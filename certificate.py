@@ -17,7 +17,7 @@ class Certificate:
     @classmethod
     def load_base64(cls, data: bytes) -> "Certificate":
         dic = json.loads(base64.urlsafe_b64decode(data).decode())
-        return Certificate(rsa.load_public_key(dic["public_key"].encode()), dic["signature"])
+        return cls(rsa.load_public_key(dic["public_key"].encode()), dic["signature"])
 
 def digest_public_key(key: PublicKey) -> int:
     return int.from_bytes(hashlib.sha256(json.dumps({"n": key.n, "e": key.e}).encode()).digest(), "big")
