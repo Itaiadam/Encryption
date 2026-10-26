@@ -62,20 +62,32 @@ class PBKDF2HMAC(PBKDF2):
     def starter(self) -> bytes:
         return self.salt
 
-key = b'secret key'
-salt = b'This is a salt'
-out = 128
+@dataclass
+class PBKDF2HMAC_DRBG(PBKDF2HMAC):
 
-generators = [
-    KDF("sha256", key=key, size=out),
-    KDF2("sha256", key=key, size=out),
-    PBKDF2("sha256", key=key, salt=salt, size=out, iterations=1000),
-    PBKDF2HMAC("sha256", key=key, salt=salt, size=out, iterations=1000),
-]
+    def generate(self, size: int) -> bytes:
+        self.size = size
+        self.salt = data = self.derive()
+        return data
 
-for generator in generators:
-    print(generator.__class__.__name__)
-    d = generator.derive().hex()
-    for i in range(0, len(d), 64):
-        print(d[i:i+64])
-    print()
+def main():
+    key = b'secret key'
+    salt = b'This is a salt'
+    out = 128
+
+    generators = [
+        KDF("sha256", key=key, size=out),
+        KDF2("sha256", key=key, size=out),
+        PBKDF2("sha256", key=key, salt=salt, size=out, iterations=1000),
+        PBKDF2HMAC("sha256", key=key, salt=salt, size=out, iterations=1000),
+    ]
+
+    for generator in generators:
+        print(generator.__class__.__name__)
+        d = generator.derive().hex()
+        for i in range(0, len(d), 64):
+            print(d[i:i+64])
+        print()
+
+if __name__ == "__main__":
+    main()
