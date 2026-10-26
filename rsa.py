@@ -2,9 +2,11 @@ import json, base64, sympy, math
 from dataclasses import dataclass
 
 def distant_random_primes(size: int) -> tuple[int, int]:
-    p = sympy.randprime(2**(size-1), 2**size)
-    q = sympy.randprime(2**(size-2), 2**(size-1))
-    return p,q
+    while True:
+        p = sympy.randprime(2**(size-1), 2**size)
+        q = sympy.randprime(2**(size-2), 2**(size-1))
+        if (p * q).bit_length() == 2 * size - 2:
+            return p,q
 
 @dataclass
 class PublicKey:

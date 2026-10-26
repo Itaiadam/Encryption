@@ -38,13 +38,13 @@ class PeerSeedGenerator(ABC):
         else:
             raise ValueError('Invalid signature')
 
-    def certification(self, sender: Sender, receiver: Receiver)-> int:
+    def certification(self, sender: Sender, receiver: Receiver)-> None:
         sender(self.certificate.dump_base64())
         peer_certificate = Certificate.load_base64(receiver())
         if peer_certificate.verify(self.ca_public):
             self.peer.my_public_key = peer_certificate.public_key
         else:
-            raise ValueError('Invalid signature')
+            raise ValueError('Invalid certificate')
 
     def exchange(self, sender: Sender, receiver: Receiver) -> int:
         pass
