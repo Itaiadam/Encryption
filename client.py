@@ -9,7 +9,6 @@ type Sender = Callable[[bytes], ...]
 type Receiver = Callable[[], bytes]
 
 def int_to_bytes(value: int) -> bytes:
-    """Convert the numeric value itself (not its digits) to bytes."""
     return value.to_bytes(max(1, (value.bit_length() + 7) // 8), "big")
 
 def bytes_to_int(data: bytes) -> int:
@@ -56,10 +55,12 @@ class ClientAutoSeedGenerator(ClientSeedGenerator):
 
 @dataclass
 class ClientDHESeedGenerator(ClientSeedGenerator):
+    my_public: bytes = None
 
     def exchange(self, sender: Sender, receiver: Receiver) -> int:
         n = bytes_to_int(self.receive(receiver))
         dhe = DHE(n)
         server_value = bytes_to_int(self.receive(receiver))
-        self.send(int_to_bytes(dhe.send()), sender)
+        self.my_public = int_to_bytes(dhe.send())
+        self.send(self.my_public, sender)
         return dhe.receive(server_value)

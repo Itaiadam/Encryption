@@ -1,0 +1,50 @@
+import rsa, socket, peer as peer_module
+from kdf import PBKDF2HMAC_DRBG
+from certificate import Certificate
+from dhe import DHE
+
+CA_PUBLIC = rsa.PublicKey(n=29220375997813350083278338607879541229804718703569575219004658786852186214053691610899857738173833101541981664676820397058550831191561578453054949962727521296357479486481112658394390902408571279715496453156831571729473098438430176277485695014133918328368543207963825852083074695989797906145149036950036228995501199971842860748900398534687436766811995398913837106879632501437600217549423753958596903114842255830521477068520101934509934520575089151006005951441198872714138469197375139246002178104928884876278588042278544704706180461207483591482177451669313083355605898518281092982965421633108926949348640285019707703347, e=65537)
+
+DHE_N = int(
+    "FFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74"
+    "020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F1437"
+    "4FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7ED"
+    "EE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF05"
+    "98DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB"
+    "9ED529077096966D670C354E4ABC9804F1746C08CA18217C32905E462E36CE3B"
+    "E39E772C180E86039B2783A2EC07A28FB5C55DF06F4C52C9DE2BCBF695581718"
+    "3995497CEA956AE515D2261898FA051015728E5A8AACAA68FFFFFFFFFFFFFFFF",
+    16,
+)
+
+LENGTH_SIZE = 4
+
+def send(sock: socket.socket, data: bytes) -> None:
+    sock.sendall(len(data).to_bytes(LENGTH_SIZE, "big") + data)
+
+def receive_exact(sock: socket.socket, size: int) -> bytes:
+    data = b""
+    while len(data) < size:
+        chunk = sock.recv(size - len(data))
+        if not chunk:
+            raise ConnectionError("Connection closed before the full message arrived")
+        data += chunk
+    return data
+
+def receive(sock: socket.socket) -> bytes:
+    length = int.from_bytes(receive_exact(sock, LENGTH_SIZE), "big")
+    return receive_exact(sock, length)
+
+IP = "127.0.0.1"
+PORT = 5555
+
+def keys_generator(sock: socket.socket, certificate: Certificate, my: rsa.RSA, peer: rsa.RSA, dhe: DHE) -> dict[str, bytes]:
+    generator = peer_module.PeerDHESeedGenerator(CA_PUBLIC, certificate, my, peer, dhe)
+    seed = generator.derive(lambda data: send(sock, data), lambda: receive(sock))
+
+    drbg = PBKDF2HMAC_DRBG("sha256", peer_module.int_to_bytes(seed), 16, b"", 1000)
+
+    keys_dict: dict[str, bytes] = {"AES1": b"", "AES2": b"", "IV1": b"", "IV2": b"", "HMAC1": b"", "HMAC2": b""}
+    for key in keys_dict:
+        keys_dict[key] = drbg.generate(16)
+    return keys_dict

@@ -49,8 +49,10 @@ class ServerAutoSeedGenerator(ServerSeedGenerator):
 @dataclass
 class ServerDHESeedGenerator(ServerSeedGenerator):
     dhe: DHE
+    client_public: bytes = None
 
     def exchange(self, sender: Sender, receiver: Receiver) -> int:
         self.send(int_to_bytes(self.dhe.n), sender)
         self.send(int_to_bytes(self.dhe.send()), sender)
-        return self.dhe.receive(bytes_to_int(self.receive(receiver)))
+        self.client_public = self.receive(receiver)
+        return self.dhe.receive(bytes_to_int(self.client_public))
